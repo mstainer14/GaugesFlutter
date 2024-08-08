@@ -1,7 +1,9 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 
 import '../../../geekyants_flutter_gauges.dart';
 import '../linear_gauge_label.dart';
@@ -27,6 +29,8 @@ class RenderLinearGaugeShapePointer extends RenderOpacity {
     required bool isInteractive,
     required Animation<double> pointerAnimation,
     required LinearGauge linearGauge,
+    required String Function(double? value)? labelFormatter,
+    required EdgeInsets shapePadding,
   })  : _value = value,
         _height = height,
         _onChanged = onChanged,
@@ -41,7 +45,9 @@ class RenderLinearGaugeShapePointer extends RenderOpacity {
         _linearGauge = linearGauge,
         _pointerAnimation = pointerAnimation,
         _isInteractive = isInteractive,
-        _enableAnimation = enableAnimation;
+        _enableAnimation = enableAnimation,
+        _labelFormatter = labelFormatter,
+        _shapePadding = shapePadding;
 
   double yAxisForGaugeContainer = 0, xAxisForGaugeContainer = 0;
   late LinearGaugeLabel linearGaugeLabel;
@@ -76,6 +82,15 @@ class RenderLinearGaugeShapePointer extends RenderOpacity {
       return;
     }
     _onChanged = value;
+  }
+
+  String Function(double value)? get labelFormatter => _labelFormatter;
+  String Function(double value)? _labelFormatter;
+  set setLabelFormatter(String Function(double value)? value) {
+    if (value == _labelFormatter) {
+      return;
+    }
+    _labelFormatter = value;
   }
 
   /// Gets the orientation to [RenderLinearGaugeShapePointer].
@@ -132,6 +147,20 @@ class RenderLinearGaugeShapePointer extends RenderOpacity {
     }
 
     _height = value;
+    markNeedsLayout();
+  }
+
+  /// Gets the padding assigned to [RenderLinearGaugeShapePointer].
+  EdgeInsets get shapePadding => _shapePadding;
+  EdgeInsets _shapePadding;
+
+  /// Sets the padding for [RenderLinearGaugeShapePointer].
+  set setshapePadding(EdgeInsets value) {
+    if (value == _shapePadding) {
+      return;
+    }
+
+    _shapePadding = value;
     markNeedsLayout();
   }
 
@@ -341,7 +370,7 @@ class RenderLinearGaugeShapePointer extends RenderOpacity {
         return;
     }
 
-    if (showLabel) {
+    if (showLabel || labelFormatter != null) {
       _drawLabel(canvas, offset, quarterTurns, rulerPosition, linearGauge);
     }
   }
@@ -355,11 +384,17 @@ class RenderLinearGaugeShapePointer extends RenderOpacity {
       textDirection: TextDirection.ltr,
       textAlign: TextAlign.center,
     );
+    final String pointerText = (labelFormatter != null)
+        ? labelFormatter!(value ?? linearGauge.value!).toString()
+        : (value != null)
+            ? value.toString()
+            : linearGauge.value!.toString();
 
-    textPainter.text = TextSpan(
-        text: value == null ? linearGauge.value!.toString() : value.toString(),
-        style: labelStyle);
     offset = applyAnimations(linearGauge, offset);
+    textPainter.text = TextSpan(
+      text: pointerText,
+      style: labelStyle,
+    );
 
     textPainter.layout();
     if (shape == PointerShape.circle) {
@@ -370,14 +405,21 @@ class RenderLinearGaugeShapePointer extends RenderOpacity {
             : textPainter.width / 2;
         switch (pointerPosition) {
           case PointerPosition.top:
-            offset = Offset(offset.dx + height / 2, offset.dy - yAxisTurn);
+            offset = Offset(offset.dx + height / 2,
+                offset.dy - yAxisTurn - shapePadding.top - shapePadding.bottom);
             break;
           case PointerPosition.bottom:
-            offset =
-                Offset(offset.dx + height / 2, offset.dy + height + yAxisTurn);
+            offset = Offset(
+                offset.dx + height / 2,
+                offset.dy +
+                    height +
+                    yAxisTurn +
+                    shapePadding.top +
+                    shapePadding.bottom);
             break;
           default:
-            offset = Offset(offset.dx + height / 2, offset.dy - yAxisTurn);
+            offset = Offset(offset.dx + height / 2,
+                offset.dy - yAxisTurn - shapePadding.top - shapePadding.bottom);
         }
       } else {
         var xAxisTurn = (quarterTurns == QuarterTurns.zero ||
@@ -386,14 +428,23 @@ class RenderLinearGaugeShapePointer extends RenderOpacity {
             : textPainter.height / 2;
         switch (pointerPosition) {
           case PointerPosition.right:
-            offset =
-                Offset(offset.dx + height + xAxisTurn, offset.dy + height / 2);
+            offset = Offset(
+                offset.dx +
+                    height +
+                    xAxisTurn +
+                    shapePadding.right +
+                    shapePadding.left,
+                offset.dy + height / 2);
             break;
           case PointerPosition.left:
-            offset = Offset(offset.dx - xAxisTurn, offset.dy + height / 2);
+            offset = Offset(
+                offset.dx - xAxisTurn - shapePadding.right - shapePadding.left,
+                offset.dy + height / 2);
             break;
           default:
-            offset = Offset(offset.dx - xAxisTurn, offset.dy + height / 2);
+            offset = Offset(
+                offset.dx - xAxisTurn - shapePadding.right - shapePadding.left,
+                offset.dy + height / 2);
         }
       }
       switch (pointerAlignment) {
@@ -461,16 +512,21 @@ class RenderLinearGaugeShapePointer extends RenderOpacity {
                   quarterTurns == QuarterTurns.two)
               ? textPainter.height
               : textPainter.width;
-          offset =
-              Offset(offset.dx - textWidth + width / 2, offset.dy - yAxisTurn);
+          offset = Offset(offset.dx - textWidth + width / 2,
+              offset.dy - yAxisTurn - shapePadding.top - shapePadding.bottom);
           break;
         case PointerPosition.bottom:
           var yAxisTurn = (quarterTurns == QuarterTurns.zero ||
                   quarterTurns == QuarterTurns.two)
               ? textHeight / 2
               : textWidth / 2;
-          offset = Offset(offset.dx - textWidth + width / 2,
-              offset.dy + height + yAxisTurn);
+          offset = Offset(
+              offset.dx - textWidth + width / 2,
+              offset.dy +
+                  height +
+                  yAxisTurn +
+                  shapePadding.top -
+                  shapePadding.bottom);
           break;
         case PointerPosition.center:
           var yAxisTurn = 0.0;
@@ -487,9 +543,12 @@ class RenderLinearGaugeShapePointer extends RenderOpacity {
           }
           gaugeOrientation == GaugeOrientation.horizontal
               ? offset = Offset(
-                  offset.dx - textWidth + width / 2, (offset.dy - yAxisTurn))
+                  offset.dx - textWidth + width / 2,
+                  (offset.dy - yAxisTurn) -
+                      shapePadding.top -
+                      shapePadding.bottom)
               : offset = Offset(offset.dx - yAxisTurn * 2,
-                  offset.dy - textHeight + height / 2);
+                  (offset.dy - textHeight + height / 2));
           break;
         case PointerPosition.left:
           var xAxisTurn = (quarterTurns == QuarterTurns.zero ||
@@ -498,7 +557,8 @@ class RenderLinearGaugeShapePointer extends RenderOpacity {
               : textHeight * 3;
 
           offset = Offset(
-              offset.dx - xAxisTurn, offset.dy - textHeight + height / 2);
+              offset.dx - xAxisTurn - shapePadding.right - shapePadding.left,
+              (offset.dy - textHeight + height / 2));
           break;
         case PointerPosition.right:
           var xAxisTurn = (quarterTurns == QuarterTurns.zero ||
@@ -506,7 +566,12 @@ class RenderLinearGaugeShapePointer extends RenderOpacity {
               ? 0
               : -textHeight;
 
-          offset = Offset(offset.dx + width + xAxisTurn,
+          offset = Offset(
+              offset.dx +
+                  width +
+                  xAxisTurn +
+                  shapePadding.right +
+                  shapePadding.left,
               offset.dy - textHeight + height / 2);
           break;
 
@@ -559,6 +624,7 @@ class RenderLinearGaugeShapePointer extends RenderOpacity {
 
       double animatedAxisPoint =
           getAnimatedAxisPoint(endPoint, animationValue, linearGauge);
+
       offset = (linearGauge.gaugeOrientation! == GaugeOrientation.horizontal)
           ? Offset(animatedAxisPoint, offset.dy)
           : Offset(offset.dx, animatedAxisPoint);
@@ -582,7 +648,15 @@ class RenderLinearGaugeShapePointer extends RenderOpacity {
     paint.color = color;
 
     offset = applyAnimations(linearGauge, offset);
-    Rect rect = Rect.fromLTWH(offset.dx, offset.dy, height, height);
+    Rect rect;
+    if (linearGauge.gaugeOrientation == GaugeOrientation.horizontal) {
+      rect = Rect.fromLTWH(
+          offset.dx, offset.dy - shapePadding.bottom, height, height);
+    } else {
+      rect = Rect.fromLTWH(
+          offset.dx + shapePadding.left, offset.dy, height, height);
+    }
+
     Path path = Path();
     path.addOval(rect);
 
@@ -595,9 +669,17 @@ class RenderLinearGaugeShapePointer extends RenderOpacity {
 
     offset = applyAnimations(linearGauge, offset);
 
-    Rect rect = Rect.fromLTWH(offset.dx, offset.dy, width, height);
+    if (linearGauge.gaugeOrientation == GaugeOrientation.horizontal) {
+      Rect rect = Rect.fromLTWH(
+          offset.dx, offset.dy - shapePadding.bottom, width, height);
 
-    canvas.drawRect(rect, paint);
+      canvas.drawRect(rect, paint);
+    } else {
+      Rect rect = Rect.fromLTWH(
+          offset.dx + shapePadding.left, offset.dy, width, height);
+
+      canvas.drawRect(rect, paint);
+    }
   }
 
   void _drawTriangle(Canvas canvas, Offset vertex, LinearGauge linearGauge) {
@@ -608,7 +690,14 @@ class RenderLinearGaugeShapePointer extends RenderOpacity {
 
     center = applyAnimations(linearGauge, center);
 
-    Rect rect = Rect.fromLTWH(center.dx, center.dy, width, height);
+    Rect rect;
+    if (linearGauge.gaugeOrientation == GaugeOrientation.horizontal) {
+      rect = Rect.fromLTWH(
+          center.dx, center.dy - shapePadding.bottom, width, height);
+    } else {
+      rect = Rect.fromLTWH(
+          center.dx + shapePadding.left, center.dy, width, height);
+    }
 
     final path = Path();
 
@@ -666,7 +755,14 @@ class RenderLinearGaugeShapePointer extends RenderOpacity {
       ..style = PaintingStyle.fill;
 
     center = applyAnimations(linearGauge, center);
-    Rect rect = Rect.fromLTWH(center.dx, center.dy, width, height);
+    Rect rect;
+    if (linearGauge.gaugeOrientation == GaugeOrientation.horizontal) {
+      rect = Rect.fromLTWH(
+          center.dx, center.dy - shapePadding.bottom, width, height);
+    } else {
+      rect = Rect.fromLTWH(
+          center.dx + shapePadding.left, center.dy, width, height);
+    }
 
     final path = Path();
 
