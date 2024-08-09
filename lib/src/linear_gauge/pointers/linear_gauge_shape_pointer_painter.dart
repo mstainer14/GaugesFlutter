@@ -438,12 +438,12 @@ class RenderLinearGaugeShapePointer extends RenderOpacity {
             break;
           case PointerPosition.left:
             offset = Offset(
-                offset.dx - xAxisTurn - shapePadding.right - shapePadding.left,
+                offset.dx - xAxisTurn + shapePadding.right + shapePadding.left,
                 offset.dy + height / 2);
             break;
           default:
             offset = Offset(
-                offset.dx - xAxisTurn - shapePadding.right - shapePadding.left,
+                offset.dx - xAxisTurn + shapePadding.right + shapePadding.left,
                 offset.dy + height / 2);
         }
       }
@@ -520,13 +520,8 @@ class RenderLinearGaugeShapePointer extends RenderOpacity {
                   quarterTurns == QuarterTurns.two)
               ? textHeight / 2
               : textWidth / 2;
-          offset = Offset(
-              offset.dx - textWidth + width / 2,
-              offset.dy +
-                  height +
-                  yAxisTurn +
-                  shapePadding.top -
-                  shapePadding.bottom);
+          offset = Offset(offset.dx - textWidth + width / 2,
+              offset.dy + yAxisTurn + shapePadding.top + shapePadding.bottom);
           break;
         case PointerPosition.center:
           var yAxisTurn = 0.0;
@@ -650,11 +645,25 @@ class RenderLinearGaugeShapePointer extends RenderOpacity {
     offset = applyAnimations(linearGauge, offset);
     Rect rect;
     if (linearGauge.gaugeOrientation == GaugeOrientation.horizontal) {
-      rect = Rect.fromLTWH(
-          offset.dx, offset.dy - shapePadding.bottom, height, height);
+      if (pointerPosition == PointerPosition.top) {
+        rect = Rect.fromLTWH(
+            offset.dx, offset.dy - shapePadding.bottom, height, height);
+      } else if (pointerPosition == PointerPosition.bottom) {
+        rect = Rect.fromLTWH(
+            offset.dx, offset.dy + shapePadding.top, height, height);
+      } else {
+        rect = Rect.fromLTWH(offset.dx, offset.dy, height, height);
+      }
     } else {
-      rect = Rect.fromLTWH(
-          offset.dx + shapePadding.left, offset.dy, height, height);
+      if (pointerPosition == PointerPosition.left) {
+        rect = Rect.fromLTWH(
+            offset.dx - shapePadding.right, offset.dy, height, height);
+      } else if (pointerPosition == PointerPosition.right) {
+        rect = Rect.fromLTWH(
+            offset.dx + shapePadding.left, offset.dy, height, height);
+      } else {
+        rect = Rect.fromLTWH(offset.dx, offset.dy, height, height);
+      }
     }
 
     Path path = Path();
@@ -669,17 +678,30 @@ class RenderLinearGaugeShapePointer extends RenderOpacity {
 
     offset = applyAnimations(linearGauge, offset);
 
+    Rect rect;
     if (linearGauge.gaugeOrientation == GaugeOrientation.horizontal) {
-      Rect rect = Rect.fromLTWH(
-          offset.dx, offset.dy - shapePadding.bottom, width, height);
-
-      canvas.drawRect(rect, paint);
+      if (pointerPosition == PointerPosition.top) {
+        rect = Rect.fromLTWH(
+            offset.dx, offset.dy - shapePadding.top, width, height);
+      } else if (pointerPosition == PointerPosition.bottom) {
+        rect = Rect.fromLTWH(
+            offset.dx, offset.dy + shapePadding.bottom, width, height);
+      } else {
+        rect = Rect.fromLTWH(offset.dx, offset.dy, width, height);
+      }
     } else {
-      Rect rect = Rect.fromLTWH(
-          offset.dx + shapePadding.left, offset.dy, width, height);
-
-      canvas.drawRect(rect, paint);
+      if (pointerPosition == PointerPosition.left) {
+        rect = Rect.fromLTWH(
+            offset.dx - shapePadding.left, offset.dy, width, height);
+      } else if (pointerPosition == PointerPosition.right) {
+        rect = Rect.fromLTWH(
+            offset.dx + shapePadding.left, offset.dy, width, height);
+      } else {
+        rect = Rect.fromLTWH(offset.dx, offset.dy, width, height);
+      }
     }
+
+    canvas.drawRect(rect, paint);
   }
 
   void _drawTriangle(Canvas canvas, Offset vertex, LinearGauge linearGauge) {
