@@ -52,6 +52,7 @@ class LinearGauge extends StatefulWidget {
     this.labelTopMargin = 0.0,
     required this.rulers,
     this.rangeLinearGauge = const [],
+    this.labelColor,
     this.customLabels = const [],
     this.valueBarPosition = ValueBarPosition.center,
     this.valueBar = const [],
@@ -129,6 +130,16 @@ class LinearGauge extends StatefulWidget {
   /// ),
   /// ```
   final double? start;
+
+  ///
+  /// `labelColor` Sets the color of the label shown in the ruler.
+  ///
+  /// ```dart
+  /// const LinearGauge(
+  ///   labelColor : Colors.white
+  /// ),
+  /// ```
+  final Color? labelColor;
 
   ///
   /// `end` Sets the ending label of the [LinearGauge] Container
@@ -624,6 +635,7 @@ class _LinearGauge extends State<LinearGauge> with TickerProviderStateMixin {
         _linearGaugeWidgets.add(RulerLabel(
           linearGauge: widget,
           gaugeAnimation: _gaugeAnimation,
+          labelColor: widget.labelColor,
         ));
       }
     }
@@ -643,6 +655,7 @@ class _LinearGauge extends State<LinearGauge> with TickerProviderStateMixin {
         _linearGaugeWidgets.add(RulerLabel(
           linearGauge: widget,
           gaugeAnimation: _gaugeAnimation,
+          labelColor: widget.labelColor,
         ));
       }
     }

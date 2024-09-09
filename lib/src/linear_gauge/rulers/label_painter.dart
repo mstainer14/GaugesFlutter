@@ -7,25 +7,27 @@ import 'dart:math' as math;
 import '../linear_gauge_label.dart';
 
 class RenderRulerLabel extends RenderBox {
-  RenderRulerLabel(
-      {required GaugeOrientation gaugeOrientation,
-      required double primaryRulersHeight,
-      required Animation<double>? gaugeAnimation,
-      required bool showLabel,
-      required RulerPosition rulerPosition,
-      required double labelOffset,
-      required bool inversedRulers,
-      required List<RangeLinearGauge> rangeLinearGauge,
-      required double rulersOffset,
-      required List<CustomRulerLabel> customLabel,
-      required TextStyle textStyle,
-      required double extendLinearGauge,
-      required double start,
-      required double end})
-      : _gaugeOrientation = gaugeOrientation,
+  RenderRulerLabel({
+    required GaugeOrientation gaugeOrientation,
+    required double primaryRulersHeight,
+    required Animation<double>? gaugeAnimation,
+    required bool showLabel,
+    required RulerPosition rulerPosition,
+    required double labelOffset,
+    required bool inversedRulers,
+    required List<RangeLinearGauge> rangeLinearGauge,
+    required double rulersOffset,
+    required List<CustomRulerLabel> customLabel,
+    required TextStyle textStyle,
+    required double extendLinearGauge,
+    required double start,
+    required double end,
+    Color? labelColor,
+  })  : _gaugeOrientation = gaugeOrientation,
         _primaryRulersHeight = primaryRulersHeight,
         _gaugeAnimation = gaugeAnimation,
         _showLabel = showLabel,
+        _labelColor = labelColor,
         _rulerPosition = rulerPosition,
         _labelOffset = labelOffset,
         _inversedRulers = inversedRulers,
@@ -58,6 +60,14 @@ class RenderRulerLabel extends RenderBox {
 
     _primaryRulersHeight = primaryRulersHeight;
     markNeedsLayout();
+  }
+
+  Color? get labelColor => _labelColor;
+  Color? _labelColor;
+  set setLabelColor(Color? color) {
+    if (_labelColor == color) return;
+    _labelColor = color;
+    markNeedsPaint();
   }
 
   ///
@@ -306,7 +316,7 @@ class RenderRulerLabel extends RenderBox {
     }
 
     final ui.TextStyle labelTextStyle = ui.TextStyle(
-      color: setAnimatedColor(getRangeColor(text)),
+      color: labelColor ?? setAnimatedColor(getRangeColor(text)),
       fontSize: getTextStyle.fontSize,
       background: getTextStyle.background,
       decoration: getTextStyle.decoration,
